@@ -75,6 +75,16 @@ public class Board {
     }
 
     /**
+     * Removes a piece from the board
+     *
+     * @param p the piece to be removed
+     */
+    public static void kill(Piece p) {
+        pieces.remove(p);
+        updateBoard(p.xp, p.yp, -1, -1);
+    }
+
+    /**
      * Boolean method that checks if a move is on the board
      *
      * @param xp the x position

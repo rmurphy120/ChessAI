@@ -10,10 +10,7 @@ public class PieceRook extends Piece {
         if (!super.isValidMove(nxp, nyp))
             return false;
 
-        if (!(nxp == xp || nyp == yp))
-            return false;
-
-        if (moveOverPiece(nxp, nyp))
+        if (!(nxp == xp || nyp == yp) || moveOverPiece(nxp, nyp))
             return false;
 
         return true;

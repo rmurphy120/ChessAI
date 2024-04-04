@@ -10,10 +10,7 @@ public class PieceQueen extends Piece {
         if (!super.isValidMove(nxp, nyp))
             return false;
 
-        if (!(Math.abs(nxp - xp) == Math.abs(nyp - yp) || nxp == xp || nyp == yp))
-            return false;
-
-        if (moveOverPiece(nxp, nyp))
+        if (!(Math.abs(nxp - xp) == Math.abs(nyp - yp) || nxp == xp || nyp == yp) || moveOverPiece(nxp, nyp))
             return false;
 
         return true;

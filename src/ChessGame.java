@@ -5,13 +5,19 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
+import java.util.Random;
+
 public class ChessGame {
     // Tracks the piece that is currently being moved
     private static Piece currentPiece;
+    public static boolean whitesTurn = new Random().nextBoolean();
 
     public static void main(String[] args) {
         Board.setUpBoard();
+        createGraphics();
+    }
 
+    private static void createGraphics() {
         // Draws the board to a window
         JFrame frame = new JFrame();
         frame.setBounds(10, 10, 512, 512);

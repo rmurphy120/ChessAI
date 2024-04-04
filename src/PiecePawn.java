@@ -10,14 +10,27 @@ public class PiecePawn extends Piece {
         if (!super.isValidMove(nxp, nyp))
             return false;
 
-        // TODO Add en passant
-        boolean isCapturing = Board.board[nxp][nyp] != null && Board.board[nxp][nyp].IS_WHITE != IS_WHITE;
+        boolean isCapturing = Board.board[nxp][nyp] != null;
         boolean isStraight = nxp == xp && !isCapturing;
+
+        // En passant logic
+        Piece otherPawn = Board.board[nxp][yp];
+
+        boolean isEnPassant = Math.abs(nxp - xp) == 1 && nyp - yp == (IS_WHITE ? -1 : 1) && !isCapturing &&
+                otherPawn instanceof PiecePawn && otherPawn.equals(enPassantable);
+
+        // Partial diagonal capture logic
         boolean isDiagonal = Math.abs(nxp - xp) == 1 && isCapturing;
 
-        if (!((nyp - yp == (IS_WHITE ? -1 : 1) && (isStraight || isDiagonal)) ||
-                (!hasMoved && nyp - yp == (IS_WHITE ? -2 : 2) && isStraight && !moveOverPiece(nxp, nyp))))
+        // Double move logic
+        boolean isDoubleMove = !hasMoved && nyp - yp == (IS_WHITE ? -2 : 2) && isStraight && !moveOverPiece(nxp, nyp);
+
+        if (!((nyp - yp == (IS_WHITE ? -1 : 1) && (isStraight || isDiagonal)) || isDoubleMove || isEnPassant))
             return false;
+
+        // At this point, assumes move is valid
+        if (isEnPassant)
+            Board.kill(otherPawn);
 
         return true;
     }

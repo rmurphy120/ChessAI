@@ -11,27 +11,26 @@ public class PieceKing extends Piece {
             return false;
 
         //TODO Handle the king checking itself
-        boolean isCastling = false;
-        Piece rook = null;
 
+        // Castling logic
         boolean castlingLeft = nxp - xp < 0;
         // Rook's potential new x position
         int rooknxp = castlingLeft ? nxp + 1 : nxp - 1;
 
-        if (!hasMoved && Math.abs(nxp - xp) == 2) {
-            rook = (castlingLeft ? Board.board[0][yp] : Board.board[7][yp]);
+        Piece rook = (castlingLeft ? Board.board[0][yp] : Board.board[7][yp]);
 
-            boolean isCapturing = Board.board[nxp][nyp] != null && Board.board[nxp][nyp].IS_WHITE != IS_WHITE;
-
-            isCastling = rook instanceof PieceRook && !rook.hasMoved && !isCapturing && !moveOverPiece(nxp, nyp) &&
-                    !rook.moveOverPiece(rooknxp, yp);
-        }
+        boolean isCastling = !hasMoved && Math.abs(nxp - xp) == 2 && rook instanceof PieceRook && !rook.hasMoved &&
+                !moveOverPiece(nxp, nyp) && !rook.moveOverPiece(rooknxp, yp);
 
         if (!((Math.abs(nxp - xp) <= 1 && Math.abs(nyp - yp) <= 1) || isCastling))
             return false;
 
-        if (isCastling)
+        // At this point, assumes move is valid
+        if (isCastling) {
             rook.move(rooknxp, yp);
+            // Adjusts for the fact that move is being called twice, so whose turn it is doesn't change
+            ChessGame.whitesTurn = !ChessGame.whitesTurn;
+        }
 
         return true;
     }

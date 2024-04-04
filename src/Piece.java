@@ -9,6 +9,8 @@ import java.util.NoSuchElementException;
 public class Piece {
     // Directory where the images are pulled
     public final static File[] IMAGE_FILES = new File("images").listFiles();
+    // A piece which can be captured through en passant
+    protected static PiecePawn enPassantable;
 
     // Board x position. Used for logic
     protected int xp;
@@ -94,7 +96,12 @@ public class Piece {
     public void move(int nxp, int nyp) {
         if (isValidMove(nxp, nyp)) {
             if (Board.board[nxp][nyp] != null)
-                kill(Board.board[nxp][nyp]);
+                Board.kill(Board.board[nxp][nyp]);
+
+            // Updates enPassantable
+            enPassantable = null;
+            if (this instanceof PiecePawn && nyp - yp == (IS_WHITE ? -2 : 2))
+                enPassantable = (PiecePawn) this;
 
             Board.updateBoard(xp, yp, nxp, nyp);
 
@@ -102,8 +109,12 @@ public class Piece {
             yp = nyp;
 
             hasMoved = true;
+
+            // Changes which player's turn it is
+            ChessGame.whitesTurn = !ChessGame.whitesTurn;
         }
 
+        // Outside the if statement so graphics are reset if the move is invalid
         x = xp * 64;
         y = yp * 64;
     }
@@ -116,6 +127,10 @@ public class Piece {
      * @return true if the move is valid, false otherwise
      */
     public boolean isValidMove(int nxp, int nyp) {
+        // Is it this person's turn to move?
+        if (IS_WHITE != ChessGame.whitesTurn)
+            return false;
+
         // Is it a new position?
         if (xp == nxp && yp == nyp)
             return false;
@@ -129,16 +144,6 @@ public class Piece {
             return false;
 
         return true;
-    }
-
-    /**
-     * Removes a piece from the board
-     *
-     * @param p the piece to be removed
-     */
-    public void kill(Piece p) {
-        Board.pieces.remove(p);
-        Board.updateBoard(p.xp, p.yp, -1, -1);
     }
 
     /**
@@ -172,10 +177,10 @@ public class Piece {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Piece))
-            throw new IllegalArgumentException("o not apart of Piece");
+            return false;
 
         Piece p = (Piece) o;
-        return p != null && x == p.x && y == p.y && IS_WHITE == p.IS_WHITE && this.getClass().equals(p.getClass());
+        return x == p.x && y == p.y && IS_WHITE == p.IS_WHITE && this.getClass().equals(p.getClass());
     }
 }
 
