@@ -80,6 +80,7 @@ public class Board {
      * @param p the piece to be removed
      */
     public static void kill(Piece p) {
+        p.getImageView().setImage(null);
         pieces.remove(p);
         updateBoard(p.xp, p.yp, -1, -1);
     }

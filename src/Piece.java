@@ -1,6 +1,8 @@
-import javax.imageio.ImageIO;
-import java.awt.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.NoSuchElementException;
 
 /**
@@ -16,17 +18,13 @@ public class Piece {
     protected int xp;
     // Board y position. Used for logic
     protected int yp;
-    // Frame x position. Used for visuals
-    protected int x;
-    // Frame y position. Used for visuals
-    protected int y;
     // Keeps track if a piece has moved yet (Useful for castling and double pawn moves)
     protected boolean hasMoved = false;
     protected final boolean IS_WHITE;
     // Material value of the piece
     protected final float VALUE;
-    // Sprite of the piece
-    private Image sprite;
+    // ImageView of the piece (Javafx visualizer for images)
+    private ImageView imageView;
 
     /**
      * Constructor that instantiates a piece object
@@ -45,46 +43,27 @@ public class Piece {
 
         this.xp = xp;
         this.yp = yp;
-        this.x = xp * 64;
-        this.y = yp * 64;
         this.IS_WHITE = isWhite;
         this.VALUE = value;
 
         try {
             for (File imageFile : IMAGE_FILES)
-                if (imageFile.getName().equals(spriteName))
-                    sprite = ImageIO.read(imageFile);
+                if (imageFile.getName().equals(spriteName)) {
+                    FileInputStream inStream = new FileInputStream(imageFile);
+                    imageView = new ImageView(new Image(inStream));
+                }
         } catch (Exception e) {
             System.out.println(e.getClass() + ": " + e.getMessage());
         }
 
-        if (sprite == null)
+        if (imageView == null)
             throw new NoSuchElementException("sprite not initialized");
 
         Board.pieces.add(this);
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public Image getSprite() {
-        return sprite;
-    }
-
-    /**
-     * Modifies the frame position without affecting the board position. Used for modifying visuals without logic
-     *
-     * @param nx the new frame x position of this Piece
-     * @param ny the new frame y position of this Piece
-     */
-    public void setCoordinates(int nx, int ny) {
-        x = nx;
-        y = ny;
+    public ImageView getImageView() {
+        return imageView;
     }
 
     /**
@@ -112,11 +91,13 @@ public class Piece {
 
             // Changes which player's turn it is
             ChessGame.whitesTurn = !ChessGame.whitesTurn;
+            ChessGame.turn.setText(ChessGame.whitesTurn ? "White's turn" : "Black's turn");
         }
 
         // Outside the if statement so graphics are reset if the move is invalid
-        x = xp * 64;
-        y = yp * 64;
+
+        imageView.setX(xp * 64);
+        imageView.setY(yp * 64);
     }
 
     /**
@@ -176,11 +157,10 @@ public class Piece {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Piece))
+        if (!(o instanceof Piece p))
             return false;
 
-        Piece p = (Piece) o;
-        return x == p.x && y == p.y && IS_WHITE == p.IS_WHITE && this.getClass().equals(p.getClass());
+        return xp == p.xp && yp == p.yp && IS_WHITE == p.IS_WHITE && this.getClass().equals(p.getClass());
     }
 }
 
