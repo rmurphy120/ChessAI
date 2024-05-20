@@ -6,8 +6,8 @@ public class PieceQueen extends Piece {
     }
 
     @Override
-    public boolean isValidMove(int nxp, int nyp) {
-        if (!super.isValidMove(nxp, nyp))
+    public boolean isValidMove(int nxp, int nyp, boolean isForAttacking) {
+        if (!super.isValidMove(nxp, nyp, isForAttacking))
             return false;
 
         if (!(Math.abs(nxp - xp) == Math.abs(nyp - yp) || nxp == xp || nyp == yp) || moveOverPiece(nxp, nyp))

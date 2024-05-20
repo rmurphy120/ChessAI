@@ -14,15 +14,15 @@ public class Piece {
     // A piece which can be captured through en passant
     protected static PiecePawn enPassantable;
 
+    protected final boolean IS_WHITE;
+    // Material value of the piece
+    protected final float VALUE;
     // Board x position. Used for logic
     protected int xp;
     // Board y position. Used for logic
     protected int yp;
     // Keeps track if a piece has moved yet (Useful for castling and double pawn moves)
     protected boolean hasMoved = false;
-    protected final boolean IS_WHITE;
-    // Material value of the piece
-    protected final float VALUE;
     // ImageView of the piece (Javafx visualizer for images)
     private ImageView imageView;
 
@@ -73,9 +73,17 @@ public class Piece {
      * @param nyp the new board y position of this Piece
      */
     public void move(int nxp, int nyp) {
-        if (isValidMove(nxp, nyp)) {
+        if (isValidMove(nxp, nyp, false)) {
             if (Board.board[nxp][nyp] != null)
                 Board.kill(Board.board[nxp][nyp]);
+
+            // If the piece moved was a king, checks if it castled
+            if (this instanceof PieceKing)
+                ((PieceKing) this).checkCastle();
+
+            // If the piece moved was a pawn, checks if it performed en passant
+            if (this instanceof PiecePawn)
+                ((PiecePawn) this).checkEnPassant();
 
             // Updates enPassantable
             enPassantable = null;
@@ -103,15 +111,12 @@ public class Piece {
     /**
      * Checks if a particular move is valid in a general sense. Overrode by child classes to handle specific cases
      *
-     * @param nxp the new board x position of this Piece
-     * @param nyp the new board y position of this Piece
+     * @param nxp            the new board x position of this Piece
+     * @param nyp            the new board y position of this Piece
+     * @param isForAttacking is the method called to find attacking squares, or valid squares
      * @return true if the move is valid, false otherwise
      */
-    public boolean isValidMove(int nxp, int nyp) {
-        // Is it this person's turn to move?
-        if (IS_WHITE != ChessGame.whitesTurn)
-            return false;
-
+    public boolean isValidMove(int nxp, int nyp, boolean isForAttacking) {
         // Is it a new position?
         if (xp == nxp && yp == nyp)
             return false;
@@ -120,11 +125,63 @@ public class Piece {
         if (!Board.isOnBoard(nxp, nyp))
             return false;
 
-        // Is there's a same color piece at that position
+        if(isForAttacking)
+            return true;
+
+        // Method only continues to this point if function is not called for attacking
+
+        // Is it this person's turn to move?
+        if (IS_WHITE != ChessGame.whitesTurn)
+            return false;
+
+        // Is there's a same color piece at that position?
         if (Board.board[nxp][nyp] != null && IS_WHITE == Board.board[nxp][nyp].IS_WHITE)
             return false;
 
+        if (putsMYKingInCheck(nxp, nyp))
+            return false;
+
         return true;
+    }
+
+    /**
+     * Returns true if this move puts this player's team in check
+     *
+     * @param nxp the new x position
+     * @param nyp the new y position
+     *
+     * @return true if this move puts this player's team in check
+     */
+    public boolean putsMYKingInCheck(int nxp, int nyp) {
+        // Simulates the move to test if the piece's king will be in check
+        int xp = this.xp;
+        int yp = this.yp;
+        Piece pieceOnCheckedSquare = Board.board[nxp][nyp];
+
+        if (pieceOnCheckedSquare != null)
+            Board.pieces.remove(pieceOnCheckedSquare);
+        this.xp = nxp;
+        this.yp = nyp;
+        Board.updateBoard(xp,yp,nxp,nyp);
+
+        // Finds the player's king
+        PieceKing piecesKing = null;
+
+        for (Piece each : Board.pieces)
+            if (IS_WHITE == each.IS_WHITE && each instanceof PieceKing)
+                piecesKing = (PieceKing) each;
+
+        // Checks if the players king is in check
+        boolean out = piecesKing.isInCheck();
+
+        this.xp = xp;
+        this.yp = yp;
+        Board.updateBoard(nxp,nyp,xp,yp);
+        Board.board[nxp][nyp] = pieceOnCheckedSquare;
+        if (pieceOnCheckedSquare != null)
+            Board.pieces.add(pieceOnCheckedSquare);
+
+        return out;
     }
 
     /**
@@ -153,6 +210,38 @@ public class Piece {
         }
 
         return false;
+    }
+
+    /**
+     * Calculates the squares which this piece could move. Goes through each square
+     *
+     * @return a bitboard representing the squares which this piece could move
+     */
+    public long getValidMoves() {
+        long validMoves = 0;
+
+        for (int typ = 0; typ < 8; typ++)
+            for (int txp = 0; txp < 8; txp++)
+                if (isValidMove(txp, typ, false))
+                    validMoves = validMoves | Board.coordinateToLongBinary(txp, typ);
+
+        return validMoves;
+    }
+
+    /**
+     * Calculates the squares which this piece attacks. Goes through each square
+     *
+     * @return a bitboard representing the squares which this piece attacks
+     */
+    public long getAttackingSquares() {
+        long out = 0;
+
+        for (int typ = 0; typ < 8; typ++)
+            for (int txp = 0; txp < 8; txp++)
+                if (isValidMove(txp, typ, true))
+                    out = out | Board.coordinateToLongBinary(txp, typ);
+
+        return out;
     }
 
     @Override

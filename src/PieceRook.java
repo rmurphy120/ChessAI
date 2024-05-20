@@ -6,8 +6,8 @@ public class PieceRook extends Piece {
     }
 
     @Override
-    public boolean isValidMove(int nxp, int nyp) {
-        if (!super.isValidMove(nxp, nyp))
+    public boolean isValidMove(int nxp, int nyp, boolean isForAttacking) {
+        if (!super.isValidMove(nxp, nyp, isForAttacking))
             return false;
 
         if (!(nxp == xp || nyp == yp) || moveOverPiece(nxp, nyp))

@@ -6,8 +6,8 @@ public class PieceKnight extends Piece {
     }
 
     @Override
-    public boolean isValidMove(int nxp, int nyp) {
-        if (!super.isValidMove(nxp, nyp))
+    public boolean isValidMove(int nxp, int nyp, boolean isForAttacking) {
+        if (!super.isValidMove(nxp, nyp, isForAttacking))
             return false;
 
         if (!((Math.abs(nxp - xp ) == 2 && Math.abs(nyp - yp ) == 1) ||

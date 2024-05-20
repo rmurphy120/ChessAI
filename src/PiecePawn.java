@@ -1,22 +1,26 @@
 public class PiecePawn extends Piece {
     private static final float PAWN_VALUE = 1;
 
+    // Temporary variables for en passant
+    private boolean isEnPassant = false;
+    private Piece otherPawn = null;
+
     public PiecePawn(int x, int y, boolean isWhite) {
         super(x, y, isWhite, PAWN_VALUE, (isWhite ? "white" : "black") + "_pawn.png");
     }
 
     @Override
-    public boolean isValidMove(int nxp, int nyp) {
-        if (!super.isValidMove(nxp, nyp))
+    public boolean isValidMove(int nxp, int nyp, boolean isForAttacking) {
+        if (!super.isValidMove(nxp, nyp, isForAttacking))
             return false;
 
         boolean isCapturing = Board.board[nxp][nyp] != null;
         boolean isStraight = nxp == xp && !isCapturing;
 
         // En passant logic
-        Piece otherPawn = Board.board[nxp][yp];
+        otherPawn = Board.board[nxp][yp];
 
-        boolean isEnPassant = Math.abs(nxp - xp) == 1 && nyp - yp == (IS_WHITE ? -1 : 1) && !isCapturing &&
+        isEnPassant = Math.abs(nxp - xp) == 1 && nyp - yp == (IS_WHITE ? -1 : 1) && !isCapturing &&
                 otherPawn instanceof PiecePawn && otherPawn.equals(enPassantable);
 
         // Partial diagonal capture logic
@@ -28,10 +32,32 @@ public class PiecePawn extends Piece {
         if (!((nyp - yp == (IS_WHITE ? -1 : 1) && (isStraight || isDiagonal)) || isDoubleMove || isEnPassant))
             return false;
 
-        // At this point, assumes move is valid
+        return true;
+    }
+
+    @Override
+    public long getAttackingSquares() {
+        long out = 0;
+        int txp;
+        int typ = yp + (IS_WHITE ? -1 : 1);
+
+        for (int i = -1; i <= 1; i += 2) {
+            txp = xp + i;
+            if (super.isValidMove(txp, typ, true))
+                out += Board.coordinateToLongBinary(txp, typ);
+        }
+
+        return out;
+    }
+
+    /**
+     * Handles an en passant
+     */
+    public void checkEnPassant() {
         if (isEnPassant)
             Board.kill(otherPawn);
 
-        return true;
+        isEnPassant = false;
+        otherPawn = null;
     }
 }
