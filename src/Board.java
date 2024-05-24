@@ -4,13 +4,14 @@ public class Board {
     // 2-by-2 array of Pieces representing the board
     public static Piece[][] board;
     // List of all pieces in play
-    public static LinkedList<Piece> pieces = new LinkedList<>();
+    public static LinkedList<Piece> pieces;
 
     /**
      * Instantiates the board with pieces. White always starts on the bottom
      */
     public static void setUpBoard() {
         board = new Piece[8][8];
+        pieces = new LinkedList<>();
 
         boolean isWhite;
         int xp;
@@ -142,5 +143,23 @@ public class Board {
                 out = out | each.getAttackingSquares();
 
         return out;
+    }
+
+    /**
+     * Checks to see if there is a checkmate
+     *
+     * @param isWhite are we checking for white or black to be mated?
+     *
+     * @return true if there is a checkmate
+     */
+    public static boolean checkCheckmate(boolean isWhite) {
+        LinkedList<Piece> tempPieces = new LinkedList<>();
+        tempPieces.addAll(pieces);
+
+        for (Piece each : tempPieces)
+            if (each.IS_WHITE != isWhite && each.getValidMoves() != 0)
+                return false;
+
+        return true;
     }
 }

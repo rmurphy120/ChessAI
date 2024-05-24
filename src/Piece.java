@@ -71,8 +71,12 @@ public class Piece {
      *
      * @param nxp the new board x position of this Piece
      * @param nyp the new board y position of this Piece
+     *
+     * @return true if the move was successful, false otherwise
      */
-    public void move(int nxp, int nyp) {
+    public boolean move(int nxp, int nyp) {
+        boolean successfulMove = false;
+
         if (isValidMove(nxp, nyp, false)) {
             if (Board.board[nxp][nyp] != null)
                 Board.kill(Board.board[nxp][nyp]);
@@ -100,12 +104,16 @@ public class Piece {
             // Changes which player's turn it is
             ChessGame.whitesTurn = !ChessGame.whitesTurn;
             ChessGame.turn.setText(ChessGame.whitesTurn ? "White's turn" : "Black's turn");
+
+            successfulMove = true;
         }
 
         // Outside the if statement so graphics are reset if the move is invalid
 
         imageView.setX(xp * 64);
         imageView.setY(yp * 64);
+
+        return successfulMove;
     }
 
     /**
@@ -125,7 +133,7 @@ public class Piece {
         if (!Board.isOnBoard(nxp, nyp))
             return false;
 
-        if(isForAttacking)
+        if (isForAttacking)
             return true;
 
         // Method only continues to this point if function is not called for attacking
@@ -138,7 +146,7 @@ public class Piece {
         if (Board.board[nxp][nyp] != null && IS_WHITE == Board.board[nxp][nyp].IS_WHITE)
             return false;
 
-        if (putsMYKingInCheck(nxp, nyp))
+        if (putsMyKingInCheck(nxp, nyp))
             return false;
 
         return true;
@@ -149,10 +157,9 @@ public class Piece {
      *
      * @param nxp the new x position
      * @param nyp the new y position
-     *
      * @return true if this move puts this player's team in check
      */
-    public boolean putsMYKingInCheck(int nxp, int nyp) {
+    public boolean putsMyKingInCheck(int nxp, int nyp) {
         // Simulates the move to test if the piece's king will be in check
         int xp = this.xp;
         int yp = this.yp;
@@ -162,7 +169,7 @@ public class Piece {
             Board.pieces.remove(pieceOnCheckedSquare);
         this.xp = nxp;
         this.yp = nyp;
-        Board.updateBoard(xp,yp,nxp,nyp);
+        Board.updateBoard(xp, yp, nxp, nyp);
 
         // Finds the player's king
         PieceKing piecesKing = null;
@@ -176,7 +183,7 @@ public class Piece {
 
         this.xp = xp;
         this.yp = yp;
-        Board.updateBoard(nxp,nyp,xp,yp);
+        Board.updateBoard(nxp, nyp, xp, yp);
         Board.board[nxp][nyp] = pieceOnCheckedSquare;
         if (pieceOnCheckedSquare != null)
             Board.pieces.add(pieceOnCheckedSquare);

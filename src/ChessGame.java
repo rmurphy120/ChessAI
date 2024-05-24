@@ -15,15 +15,18 @@ import java.util.Random;
 
 public class ChessGame extends Application {
     // Tracks whose turn it is
-    public static boolean whitesTurn = new Random().nextBoolean();
-    public static Label turn = new Label(ChessGame.whitesTurn ? "White's turn" : "Black's turn");
+    public static boolean whitesTurn;
+    public static Label turn;
+
     // Tracks the piece that is currently being moved
     private static Piece currentPiece;
+
+    // Groups used for the UI
     private static Group boardRectangles;
     private static Group possibleMoves;
+    private static Group menu;
 
     public static void main(String[] args) {
-        Board.setUpBoard();
         Application.launch(args);
     }
 
@@ -31,19 +34,28 @@ public class ChessGame extends Application {
     public void start(Stage window) {
         Pane root = new Pane();
 
-        createBoard(root);
-
-        turn.setLayoutX(550);
-        turn.setLayoutY(50);
-        root.getChildren().add(turn);
-
-        createMenu(root);
+        reset(root);
 
         Scene scene = new Scene(root, 640, 512);
 
         window.setTitle("Chess Engine");
         window.setScene(scene);
         window.show();
+    }
+
+    public void reset(Pane root) {
+        root.getChildren().clear();
+        Board.setUpBoard();
+
+        createBoard(root);
+
+        whitesTurn = new Random().nextBoolean();
+        turn = new Label(ChessGame.whitesTurn ? "White's turn" : "Black's turn");
+        turn.setLayoutX(550);
+        turn.setLayoutY(50);
+        root.getChildren().add(turn);
+
+        createMenu(root);
     }
 
     /**
@@ -57,7 +69,7 @@ public class ChessGame extends Application {
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 // Creates the checkered grid
-                Rectangle boardRect = new Rectangle(x*64, y*64, 64, 64);
+                Rectangle boardRect = new Rectangle(x * 64, y * 64, 64, 64);
                 boardRect.setFill((x + y) % 2 == 0 ? Color.BISQUE : Color.SADDLEBROWN);
 
                 boardRectangles.getChildren().add(boardRect);
@@ -68,8 +80,8 @@ public class ChessGame extends Application {
                 if (Board.board[x][y] != null) {
                     ImageView imageView = Board.board[x][y].getImageView();
 
-                    imageView.setX(x*64);
-                    imageView.setY(y*64);
+                    imageView.setX(x * 64);
+                    imageView.setY(y * 64);
 
                     imageView.setFitHeight(64);
                     imageView.setFitWidth(64);
@@ -77,7 +89,7 @@ public class ChessGame extends Application {
 
                     // Events for moving pieces
                     imageView.addEventHandler(MouseEvent.MOUSE_PRESSED, (event) -> {
-                        currentPiece = Board.board[((int)imageView.getX()) / 64][((int)imageView.getY()) / 64];
+                        currentPiece = Board.board[((int) imageView.getX()) / 64][((int) imageView.getY()) / 64];
 
                         addPossibleMovesOverlay(root);
 
@@ -92,7 +104,20 @@ public class ChessGame extends Application {
                         event.consume();
                     });
                     imageView.addEventHandler(MouseEvent.MOUSE_RELEASED, (event) -> {
-                        currentPiece.move(((int)event.getX()) / 64, ((int)event.getY()) / 64);
+                        if (currentPiece.move(((int) event.getX()) / 64, ((int) event.getY()) / 64) &&
+                                Board.checkCheckmate(currentPiece.IS_WHITE)) {
+                            reset(root);
+
+                            Label endText = new Label((currentPiece.IS_WHITE ? "White" : "Black") +
+                                    " won! Play again?");
+
+                            endText.setLayoutX(220);
+                            endText.setLayoutY(200);
+                            endText.setTextFill(Color.WHITE);
+
+                            menu.getChildren().add(endText);
+                        }
+
                         currentPiece = null;
 
                         root.getChildren().remove(possibleMoves);
@@ -139,14 +164,14 @@ public class ChessGame extends Application {
      */
     private void createMenu(Pane root) {
         // Translucent background
-        Rectangle background = new Rectangle(0,0, 512, 512);
-        background.setFill(Color.color(0.1,0.1,0.1,0.7));
+        Rectangle background = new Rectangle(0, 0, 512, 512);
+        background.setFill(Color.color(0.1, 0.1, 0.1, 0.7));
 
         Button startButton = new Button("Start");
         startButton.setLayoutX(256);
         startButton.setLayoutY(256);
 
-        Group menu = new Group(background, startButton);
+        menu = new Group(background, startButton);
 
         root.getChildren().add(menu);
 

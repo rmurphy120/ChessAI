@@ -25,7 +25,7 @@ public class PieceKing extends Piece {
         // Checks if a castle goes over a check
         boolean overCheck = false;
         for (int i = 1; i <= 2; i++)
-            if (!isForAttacking && putsMYKingInCheck(castlingLeft ? xp - i : xp + i, yp))
+            if (!isForAttacking && !hasMoved && putsMyKingInCheck(castlingLeft ? xp - i : xp + i, yp))
                 overCheck = true;
 
         isCastling = !hasMoved && nyp == yp && Math.abs(nxp - xp) == 2 && rook instanceof PieceRook && !rook.hasMoved &&
@@ -44,9 +44,9 @@ public class PieceKing extends Piece {
         if (!isCastling)
             return;
 
-        rook.move(rookNxp, yp);
-        // Adjusts for the fact that move is being called twice, so whose turn it is doesn't change
-        ChessGame.whitesTurn = !ChessGame.whitesTurn;
+        Board.updateBoard(rook.xp, rook.yp, rookNxp, rook.yp);
+        rook.xp = rookNxp;
+        rook.getImageView().setX(rookNxp * 64);
 
         rook = null;
         isCastling = false;
