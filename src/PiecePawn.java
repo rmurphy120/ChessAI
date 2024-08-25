@@ -5,20 +5,24 @@ public class PiecePawn extends Piece {
     private boolean isEnPassant = false;
     private Piece otherPawn = null;
 
-    public PiecePawn(int x, int y, boolean isWhite) {
-        super(x, y, isWhite, PAWN_VALUE, (isWhite ? "white" : "black") + "_pawn.png");
+    public PiecePawn(int x, int y, boolean isWhite, Board board) {
+        super(x, y, isWhite, PAWN_VALUE, (isWhite ? "white" : "black") + "_pawn.png", board);
+    }
+
+    public PiecePawn(Piece p, Board board) {
+        super(p, board);
     }
 
     @Override
-    public boolean isValidMove(int nxp, int nyp, boolean isForAttacking) {
-        if (!super.isValidMove(nxp, nyp, isForAttacking))
+    public boolean isValidMove(int nxp, int nyp) {
+        if (!super.isValidMove(nxp, nyp))
             return false;
 
-        boolean isCapturing = Board.board[nxp][nyp] != null;
+        boolean isCapturing = boardContainingPiece.board[nxp][nyp] != null;
         boolean isStraight = nxp == xp && !isCapturing;
 
         // En passant logic
-        otherPawn = Board.board[nxp][yp];
+        otherPawn = boardContainingPiece.board[nxp][yp];
 
         isEnPassant = Math.abs(nxp - xp) == 1 && nyp - yp == (IS_WHITE ? -1 : 1) && !isCapturing &&
                 otherPawn instanceof PiecePawn && otherPawn.equals(enPassantable);
@@ -36,26 +40,24 @@ public class PiecePawn extends Piece {
     }
 
     @Override
-    public long getAttackingSquares() {
-        long out = 0;
-        int txp;
-        int typ = yp + (IS_WHITE ? -1 : 1);
+    public boolean isAttackingSquare(int nxp, int nyp) {
+        if (!super.isAttackingSquare(nxp, nyp))
+            return false;
 
-        for (int i = -1; i <= 1; i += 2) {
-            txp = xp + i;
-            if (super.isValidMove(txp, typ, true))
-                out += Board.coordinateToLongBinary(txp, typ);
-        }
+        if (!(Math.abs(nxp - xp) == 1 && nyp - yp == (IS_WHITE ? -1 : 1)))
+            return false;
 
-        return out;
+        return true;
     }
 
     /**
      * Handles an en passant
      */
-    public void checkEnPassant() {
-        if (isEnPassant)
-            Board.kill(otherPawn);
+    public void handleEnPassant() {
+        if (!isEnPassant)
+            return;
+
+        boardContainingPiece.kill(otherPawn);
 
         isEnPassant = false;
         otherPawn = null;

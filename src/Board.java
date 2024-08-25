@@ -2,14 +2,40 @@ import java.util.LinkedList;
 
 public class Board {
     // 2-by-2 array of Pieces representing the board
-    public static Piece[][] board;
+    public Piece[][] board;
     // List of all pieces in play
-    public static LinkedList<Piece> pieces;
+    public LinkedList<Piece> pieces;
+
+    public Board() {
+    }
+
+    public Board(Board b) {
+        pieces = new LinkedList<>();
+        for (Piece each : b.pieces)
+            if (each instanceof PiecePawn)
+                pieces.add(new PiecePawn(each, this));
+            else if (each instanceof PieceKnight)
+                pieces.add(new PieceKnight(each, this));
+            else if (each instanceof PieceBishop)
+                pieces.add(new PieceBishop(each, this));
+            else if (each instanceof PieceRook)
+                pieces.add(new PieceRook(each, this));
+            else if (each instanceof PieceQueen)
+                pieces.add(new PieceQueen(each, this));
+            else if (each instanceof PieceKing)
+                pieces.add(new PieceKing(each, this));
+            else
+                pieces.add(new Piece(each, this));
+
+        board = new Piece[8][8];
+        for (Piece each : pieces)
+            board[each.xp][each.yp] = each;
+    }
 
     /**
      * Instantiates the board with pieces. White always starts on the bottom
      */
-    public static void setUpBoard() {
+    public void setUpBoard() {
         board = new Piece[8][8];
         pieces = new LinkedList<>();
 
@@ -22,7 +48,7 @@ public class Board {
             xp = i % 8;
             yp = (isWhite ? 1 : 6);
 
-            board[xp][yp] = new PiecePawn(xp, yp, !isWhite);
+            board[xp][yp] = new PiecePawn(xp, yp, !isWhite, ChessGame.gameBoard);
         }
 
         for (int i = 0; i < 4; i++) {
@@ -30,7 +56,7 @@ public class Board {
             xp = (i % 2 == 0 ? 0 : 7);
             yp = (isWhite ? 0 : 7);
 
-            board[xp][yp] = new PieceRook(xp, yp, !isWhite);
+            board[xp][yp] = new PieceRook(xp, yp, !isWhite, ChessGame.gameBoard);
         }
 
         for (int i = 0; i < 4; i++) {
@@ -38,7 +64,7 @@ public class Board {
             xp = (i % 2 == 0 ? 1 : 6);
             yp = (isWhite ? 0 : 7);
 
-            board[xp][yp] = new PieceKnight(xp, yp, !isWhite);
+            board[xp][yp] = new PieceKnight(xp, yp, !isWhite, ChessGame.gameBoard);
         }
 
         for (int i = 0; i < 4; i++) {
@@ -46,13 +72,13 @@ public class Board {
             xp = (i % 2 == 0 ? 2 : 5);
             yp = (isWhite ? 0 : 7);
 
-            board[xp][yp] = new PieceBishop(xp, yp, !isWhite);
+            board[xp][yp] = new PieceBishop(xp, yp, !isWhite, ChessGame.gameBoard);
         }
 
-        board[4][7] = new PieceKing(4, 7, true);
-        board[4][0] = new PieceKing(4, 0, false);
-        board[3][7] = new PieceQueen(3, 7, true);
-        board[3][0] = new PieceQueen(3, 0, false);
+        board[4][7] = new PieceKing(4, 7, true, ChessGame.gameBoard);
+        board[4][0] = new PieceKing(4, 0, false, ChessGame.gameBoard);
+        board[3][7] = new PieceQueen(3, 7, true, ChessGame.gameBoard);
+        board[3][0] = new PieceQueen(3, 0, false, ChessGame.gameBoard);
     }
 
     /**
@@ -65,7 +91,7 @@ public class Board {
      *
      * @throws IndexOutOfBoundsException if the old coordinate is off the board
      */
-    public static void updateBoard(int xp, int yp, int nxp, int nyp) {
+    public void updateBoard(int xp, int yp, int nxp, int nyp) {
         if (!isOnBoard(xp, yp))
             throw new IndexOutOfBoundsException("The start coordinates are not on the board");
 
@@ -81,7 +107,7 @@ public class Board {
      *
      * @param p the piece to be removed
      */
-    public static void kill(Piece p) {
+    public void kill(Piece p) {
         p.getImageView().setImage(null);
         pieces.remove(p);
         updateBoard(p.xp, p.yp, -1, -1);
@@ -94,39 +120,8 @@ public class Board {
      * @param yp the y position
      * @return true if both the x and y coordinates are between 0 and 7
      */
-    public static boolean isOnBoard(int xp, int yp) {
+    public boolean isOnBoard(int xp, int yp) {
         return 0 <= xp && xp <= 7 && 0 <= yp && yp <= 7;
-    }
-
-    /**
-     * Helper method to convert an x,y coordinate to a bitboard
-     *
-     * @param x the x position
-     * @param y the y position
-     * @return a bitboard. 63 bits will be zero and 1 bit will be 1
-     */
-    public static long coordinateToLongBinary(int x, int y) {
-        long out = 1;
-
-        for(int i = 0; i < 63 - (x + 8*y); i++)
-            out *= 2;
-
-        return out;
-    }
-
-    /**
-     * Formatting helper method that converts a bitboard to a binary string with leading 0s up to 64 digits
-     *
-     * @param l the long number
-     * @return a String representing the bitboard with exactly 64 digits
-     */
-    public static String longToStringBinary(long l) {
-        String out = Long.toBinaryString(l);
-
-        while(out.length() < 64) {
-            out = "0" + out;
-        }
-        return out;
     }
 
     /**
@@ -135,10 +130,10 @@ public class Board {
      * @param isWhite the player
      * @return a bitboard representing all the squares which a player attacks
      */
-    public static long getAttackingSquaresByAPlayer(boolean isWhite) {
+    public long getAttackingSquaresByAPlayer(boolean isWhite) {
         long out = 0;
 
-        for (Piece each : Board.pieces)
+        for (Piece each : pieces)
             if (isWhite == each.IS_WHITE)
                 out = out | each.getAttackingSquares();
 
@@ -152,9 +147,8 @@ public class Board {
      *
      * @return true if there is a checkmate
      */
-    public static boolean checkCheckmate(boolean isWhite) {
-        LinkedList<Piece> tempPieces = new LinkedList<>();
-        tempPieces.addAll(pieces);
+    public boolean checkCheckmate(boolean isWhite) {
+        LinkedList<Piece> tempPieces = new LinkedList<>(pieces);
 
         for (Piece each : tempPieces)
             if (each.IS_WHITE != isWhite && each.getValidMoves() != 0)
