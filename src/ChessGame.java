@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.util.Random;
 
 public class ChessGame extends Application {
+
     // Directory where the images are pulled
     public final static File[] IMAGE_FILES = new File("images").listFiles();
 
@@ -136,11 +137,22 @@ public class ChessGame extends Application {
         sprite.addEventHandler(MouseEvent.MOUSE_RELEASED, (event) -> {
             if (numberOfClicks == 1) {
                 if (currentPiece.move(((int) event.getX()) / 64, ((int) event.getY()) / 64)) {
-                    if (gameBoard.checkCheckmate(currentPiece.IS_WHITE)) {
+                    // Valid move
+
+                    EndState es = gameBoard.isOver(currentPiece.IS_WHITE);
+                    if (es != EndState.IN_PROGRESS) {
+                        // Game ended
+
                         reset(root);
 
-                        Label endText = new Label((currentPiece.IS_WHITE ? "White" : "Black") +
-                                " won! Play again?");
+                        String label = " Play again?";
+                        switch (es) {
+                            case WHITE_WIN -> label = "White won!" + label;
+                            case BLACK_WIN -> label = "Black won!" + label;
+                            case DRAW -> label = "Tie." + label;
+                        }
+
+                        Label endText = new Label(label);
 
                         endText.setLayoutX(220);
                         endText.setLayoutY(200);

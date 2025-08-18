@@ -89,6 +89,8 @@ public class Piece {
         boolean successfulMove = false;
 
         if (isValidMove(nxp, nyp)) {
+            boardContainingPiece.timeSinceLastCapture++;
+
             if (boardContainingPiece.board[nxp][nyp] != null)
                 boardContainingPiece.kill(boardContainingPiece.board[nxp][nyp]);
 

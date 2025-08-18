@@ -1,10 +1,18 @@
 import java.util.LinkedList;
 
+enum EndState {
+    IN_PROGRESS,
+    WHITE_WIN,
+    BLACK_WIN,
+    DRAW
+}
+
 public class Board {
     // 2-by-2 array of Pieces representing the board
     public Piece[][] board;
     // List of all pieces in play
     public LinkedList<Piece> pieces;
+    public int timeSinceLastCapture = 0;
 
     public Board() {
     }
@@ -30,6 +38,8 @@ public class Board {
         board = new Piece[8][8];
         for (Piece each : pieces)
             board[each.xp][each.yp] = each;
+
+        timeSinceLastCapture = b.timeSinceLastCapture;
     }
 
     /**
@@ -111,6 +121,7 @@ public class Board {
         p.getImageView().setImage(null);
         pieces.remove(p);
         updateBoard(p.xp, p.yp, -1, -1);
+        timeSinceLastCapture = 0;
     }
 
     /**
@@ -141,19 +152,33 @@ public class Board {
     }
 
     /**
-     * Checks to see if there is a checkmate
+     * Checks to see if the game is over
      *
-     * @param isWhite are we checking for white or black to be mated?
+     * @param isWhite are we checking for white or black to be mating?
      *
-     * @return true if there is a checkmate
+     * @return if the game is in progress or the type of ending
      */
-    public boolean checkCheckmate(boolean isWhite) {
+    public EndState isOver(boolean isWhite) {
+        // 50 move draw rule (Implies dead position and repetition)
+        if (timeSinceLastCapture >= 100)
+            return EndState.DRAW;
+
         LinkedList<Piece> tempPieces = new LinkedList<>(pieces);
+        boolean kingAttacked = false;
 
         for (Piece each : tempPieces)
-            if (each.IS_WHITE != isWhite && each.getValidMoves() != 0)
-                return false;
+            if (each.IS_WHITE != isWhite) {
+                if (each.getValidMoves() != 0)
+                    return EndState.IN_PROGRESS;
+                else if (each instanceof PieceKing && ((PieceKing)each).isInCheck())
+                    kingAttacked = true;
+            }
 
-        return true;
+        if (kingAttacked)
+            // Checkmate
+            return isWhite ? EndState.WHITE_WIN : EndState.BLACK_WIN;
+        else
+            // Stalemate
+            return EndState.DRAW;
     }
 }
